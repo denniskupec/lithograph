@@ -1,7 +1,7 @@
 #!/usr/bin/env php
-<?php
+<?php 
 
-require __DIR__ . "/vendor/autoload.php";
+require $_SERVER['HOME'] . ".composer/vendor/autoload.php";
 
 $out = new League\CLImate\CLImate;
 
@@ -14,7 +14,7 @@ try {
 		'headers' => ['Authorization' => 'Client-ID d9fea50d83dd172']
 	]);
 
-	$file = tempnam(__DIR__ . "/storage", time()); // create temporary file for screenshot data
+	$file = tempnam("/tmp", time()); // create temporary file for screenshot data
 
 	shell_exec('screencapture -s -t jpg -i ' . $file); // take a screenshot
 
@@ -42,8 +42,6 @@ try {
 
 	$response = json_decode($response->getBody()->getContents());
 
-	rename($file, __DIR__ . "/storage/{$response->data->deletehash}_{$response->data->id}.jpg"); 
-
 	$out->boldGreen()->inline("Link: ");
 	$out->white()->out($response->data->link);
 
@@ -54,6 +52,8 @@ try {
 
 } catch(Exception $e) {
 	$out->boldRed("Some Error Occured...");
-	unlink($file);
 	file_put_contents(__DIR__ . "/error.txt", $e->getMessage());
+} finally {
+	unlink($file);
 }
+
