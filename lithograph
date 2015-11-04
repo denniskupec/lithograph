@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php 
 
-require $_SERVER['HOME'] . ".composer/vendor/autoload.php";
+require $_SERVER['HOME'] . "/.composer/vendor/autoload.php";
 
 $out = new League\CLImate\CLImate;
 
@@ -28,7 +28,7 @@ try {
 		'on_headers' => function(GuzzleHttp\Psr7\Response $response) use ($out) {
 			if($response->getHeader('X-RateLimit-UserRemaining') == 0) {
 				$out->boldRed->inline("Upload rate limit reached!");
-				exit(0);
+				exit(1);
 			} else {
 				$out->boldGreen()->inline("Credits Remaining: ");
 				$out->white()->out($response->getHeader('X-RateLimit-UserRemaining'));
@@ -49,10 +49,11 @@ try {
 	$out->white()->out('http://imgur.com/delete/' . $response->data->deletehash);
 
 	shell_exec('open ' . $response->data->link);
-
+	exit(0);
 } catch(Exception $e) {
 	$out->boldRed("Some Error Occured...");
 	file_put_contents(__DIR__ . "/error.txt", $e->getMessage());
+	exit(1);
 } finally {
 	unlink($file);
 }
