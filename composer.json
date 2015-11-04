@@ -1,0 +1,15 @@
+{
+    "name": "denniskupec/lithograph",
+    "description": "Command line screenshot tool using the Imgur API",
+    "type": "project",
+    "license": "MIT",
+    "authors": [{
+			"name": "Dennis Kupec",
+			"email": "denniskupec@gmail.com"
+    }],
+    "require": {
+    	"php": ">=7.0",
+		"guzzlehttp/guzzle": "~6.0",
+		"league/climate": "^3.2"
+    }
+}

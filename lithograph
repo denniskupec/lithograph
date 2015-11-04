@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . "/vendor/autoload.php";
+
+$out = new League\CLImate\CLImate;
+
+try {
+	$http = new GuzzleHttp\Client([
+		'base_uri' => 'https://api.imgur.com',
+		'timeout' => 0,
+		'connect_timeout' => 0,
+		'http_errors' => false,
+		'headers' => ['Authorization' => 'Client-ID d9fea50d83dd172']
+	]);
+
+	$file = tempnam(__DIR__ . "/storage", time()); // create temporary file for screenshot data
+
+	shell_exec('screencapture -s -t jpg -i ' . $file); // take a screenshot
+
+
+	$response = $http->request('POST', '/3/upload', [
+		'multipart' => [
+			['name' => 'image', 'contents' => fopen($file, 'r')],
+			['name' => 'type', 'contents' => 'file'],
+			['name' => 'description', 'contents' => strval(time())]
+		],
+		'on_headers' => function(GuzzleHttp\Psr7\Response $response) use ($out) {
+			if($response->getHeader('X-RateLimit-UserRemaining') == 0) {
+				$out->boldRed->inline("Upload rate limit reached!");
+				exit(0);
+			} else {
+				$out->boldGreen()->inline("Credits Remaining: ");
+				$out->white()->out($response->getHeader('X-RateLimit-UserRemaining'));
+			}
+		},
+		'on_stats' => function(GuzzleHttp\TransferStats $stats) use ($out) {
+			$out->boldGreen()->inline("Upload Time: ");
+			$out->white()->out($stats->getTransferTime() . ' sec.');
+		}
+	]);
+
+	$response = json_decode($response->getBody()->getContents());
+
+	rename($file, __DIR__ . "/storage/{$response->data->deletehash}_{$response->data->id}.jpg"); 
+
+	$out->boldGreen()->inline("Link: ");
+	$out->white()->out($response->data->link);
+
+	$out->boldGreen()->inline("Delete Link: ");
+	$out->white()->out('http://imgur.com/delete/' . $response->data->deletehash);
+
+	shell_exec('open ' . $response->data->link);
+
+} catch(Exception $e) {
+	$out->boldRed("Some Error Occured...");
+	unlink($file);
+	file_put_contents(__DIR__ . "/error.txt", $e->getMessage());
+}
